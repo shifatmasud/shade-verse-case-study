@@ -148,7 +148,7 @@ A lake on its own is a puddle. What makes it a place is the ring around it, and 
 ![The before/after sheet from the environment pass, at phone landscape (915×412 at 1.75×) and laptop (1366×768) sizes.](https://shade-verse-case-study.vercel.app/media/sheet-env1.jpg)
 *The before/after sheet from the environment pass, at phone landscape (915×412 at 1.75×) and laptop (1366×768) sizes.*
 
-Every species started from real photos, cited in the repo: Lake Tahoe's Sand Harbor and Lake Wanaka for the shore, Yoshino cherry blossoms, coconut palms, a Jura oak. One open note: palm fronds still look like flat blades up close.
+Every species started from real photos, cited in the repo: Lake Tahoe's Sand Harbor and Lake Wanaka for the shore, Yoshino cherry blossoms, coconut palms, a Jura oak. Palm fronds were flat blades up close at first; they were rebuilt as folded, leafleted fronds in env-iter3.
 
 > **The mind:** We recognise trees by silhouette long before detail. Four clearly different outlines read as a real park even when every tree is low-poly.
 
@@ -210,7 +210,10 @@ What isn't verified yet: pointer lock, the gamepad and the hold ring can't be te
 - **City rebuild · A real park** The city, park and lake were rebuilt with Polyfork models: buildings, trees and a footbridge. Then the original hand-authored park forest and its detailed foliage were restored on top.
 - **env-iter1 · A round lake** The lake became a circle: a polar-grid water sheet, a round shoreline and a bowl under it.
 - **env-iter1 · The bridge touches the path** "Bridge start end must touch path." Eight modules now span the round lake, and the ramps land on the trail at both ends.
-- **29616c4 · Shade Verse** Hybrid water, the beach, four tree species, quality tiers, the desktop controls, Web Shock everywhere, and the title screen with its real name. This is the build that's live now.
+- **29616c4 · Shade Verse** Hybrid water, the beach, four tree species, quality tiers, the desktop controls, Web Shock everywhere, and the title screen with its real name. The build these shipped on.
+- **30a3b3a · Real palms** "Palm fronds look basic." Each frond became an arched, V-folded strip with about 60 leaflet pairs and its own sway. Every tree got a natural tapered trunk, the meadow grass got one outline instead of one per blade, and the underwater bubbles started following the real swell.
+- **24b325f · The robots shoot back** Enemies raise a glowing palm for 0.4 s, then fire a repulsor bolt. The boss fires 3-shot volleys and charges a sweeping chest beam. Web Shock pops incoming bolts. A full sound pass landed with it: 35 procedural recipes, an original score, CC0 footsteps and birds, no sirens.
+- **4b6a410 · The boss follows you** "Boss should follow heroes & keep attacking." The boss left its rooftop: it hover-dashes after you, lands on whatever roof, street or park you're on, walks you down up close and keeps firing. The leafy trees got about 65% more leaves, and the bubbles became a random emitter: seabed vents and bursts plus a stream off you, each bubble with its own size, speed, wobble and life. This is the build that's live now.
 
 > **The mind:** We judge an experience by its peaks and its end (the peak-end rule). The moments above are the ones that changed how the game feels, not the ones that took longest.
 
