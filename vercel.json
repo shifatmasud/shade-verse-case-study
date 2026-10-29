@@ -1,0 +1,6 @@
+{
+  "buildCommand": "node scripts/unpack.mjs",
+  "outputDirectory": "dist",
+  "installCommand": "",
+  "framework": null
+}
