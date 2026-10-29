@@ -46,8 +46,7 @@ Shade Verse is a 3D game that runs in the browser, on a phone or a laptop, with 
 
 The idea is the feeling of a superhero swinging game, made to fit in a browser tab on a budget phone. You swing, spring between buildings, jump, glide and fly. When robots get in the way, you fight them with your fists, your web and your Web Shock.
 
-![Gameplay trailer placeholder: the Shade Verse title screen](https://shade-verse-case-study.vercel.app/media/still-1440-title.jpg)
-*Gameplay trailer: coming soon. This spot is reserved for the trailer. Until it lands, the game itself is one tap away: play it live.*
+*Gameplay trailer (22.5 s): the title, the lake and beach, a swing over the park, and street combat. Recorded from the game in a headless browser.*
 
 The world is built from free low-poly Polyfork models (buildings, trees, the footbridge), shaped and placed in code, with Poly Haven CC0 textures for bark and leaves. Everything else, the water, the sand, the grass and the outlines, is a shader written for this game.
 
