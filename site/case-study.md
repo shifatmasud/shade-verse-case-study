@@ -247,9 +247,220 @@ One rule I keep: the game's name is always written the same way, two words, Shad
 
 > **Steal this:** Keep your in-game UI quiet, and give your title screen one job: say the name, show the mark, and get out of the way.
 
+## Reflections: maths instead of a mirror
+
+![Before and after, same camera. Before: a cheap skyline strip that didn’t sit on the world. Now: the city traced into the sea as soft blocks, stretched toward you like reflections on rippled water.](https://shade-verse-case-study.vercel.app/media/refl-before-after.jpg)
+
+The textbook way to reflect a city in water is to draw the city twice: once for you, and once upside down for the water. That second picture is exactly what a budget phone can’t pay for, so on Oct 31 I locked it out. **No reflection probe, no second renders.** The sea still had to reflect the city.
+
+What followed was the longest search in the project. Zero built a reflection, I looked at it, and most of them died:
+
+- **A probe, screen-space reflections, a mirror pass** (Oct 30). They looked right, and every one of them drew the world a second time. The lock removed them.
+- **A skyline strip** (Oct 31). The towers were projected once on the CPU into a strip the sea reads with one texture lookup. Zero renders, but the shapes floated instead of sitting on the world.
+- **Four more tries** (Nov 1), each behind its own test switch: a baked top-down height map, flat picture cards of the skyline, real screen-space as a test only, and a full mirrored scene.
+
+> **Me:** none of 4 ok
+>
+> **Me:** Analytic raytrace reflection has more potential... trace every building, bridge, islands. Lets go with this if performance good
+>
+> **Me:** heavy blurry low detail cheap
+>
+
+*My messages on Nov 1, as written into the build log. The last one decided the look.*
+
+### The trick: maths instead of a mirror
+
+Every landmark goes into a small data texture once, as a box with a colour. A coarse grid over the map, 40 m per cell, lists which boxes touch each cell. For every sea pixel, the shader bounces the view ray off the rippled surface and walks it across that grid cell by cell, the same walk the old raycasting games used, and tests only the boxes in the cells it crosses. Open sea is skipped in jumps: each cell knows how far away the nearest building is, so a ray over empty water leaps up to 7 cells at once.
+
+Then I asked for *less* detail. Each cell became one soft block: all its buildings merged into one footprint, the tallest top, the average colour, and a blur that grows with distance. The ray climbs at half speed, so every mirrored shape stretches about twice as long toward you, the way reflections smear on real rippled water. At night each block carries its own light: warm windows in the city, magenta and cyan neon in Neon Harbor. The same trace is reused from below the surface, which is the next chapter.
+
+How much of it you see is decided by Fresnel, using the exact formula for light going from air (1.0) into water (1.333) rather than the usual shortcut. Clear at your feet, a mirror toward the horizon.
+
+**The mind.** We judge a reflection by feel, not detail. The eye checks that the right shapes are in the right place with the right colour, and then it stops looking. It never counts windows. Blur reads as water; sharpness reads as glass.
+
+**Steal this.** When the textbook answer costs a second render, ask what the answer has to *look* like and compute only that. Forty-metre blocks traced with plain maths were enough to fool my eye, and they cost no second picture of the world.
+
+## Refraction: one line between two worlds
+
+![The half-under camera, before (left of each row) and after. Top: in a wave trough. Bottom: half a metre over. Before, waves further out stood in the air and underwater tint leaked above the line.](https://shade-verse-case-study.vercel.app/media/water-line.jpg)
+
+Water isn’t a surface, it’s a border between two worlds. From above you look through it into the sand. From below you look up through it at the sky. And when the camera sits half in, you see both at once, cut by one wavy line. Each of those views had to agree with the others.
+
+### Looking down
+
+Each sea pixel bends the view ray with Snell’s law (air 1.0 into water 1.333) and follows the bent ray down to the seabed, which is a baked height map, in a short two-step march. Light dies along the way the way it does in real water: red first, then green. The bed only shows through where it’s less than about 9 m down; deeper, it’s just water colour. The bright webs on the sand come from a caustics tile simulated once by refracting a million rays through a rippled surface. It’s the same water path on the phone and on the laptop.
+
+### Looking up
+
+![Left: a real photo taken in a pool, used as the reference. Right: ours, before (top) and after (bottom). Outside the bright window to the sky, the surface now mirrors the seabed, like real water does.](https://shade-verse-case-study.vercel.app/media/water-snell.jpg)
+
+From below, the surface is a window to the air. Inside Snell’s window, the cone of sky you can see from underwater, the same maths that draws the reflections runs along the refracted ray, so the skyline and the sun show through the waves, with a slightly different bend per colour for a hint of rainbow at the edge. Past the critical angle of 48.6°, total internal reflection takes over and the surface mirrors the seabed. I wanted it soft, so it was rebuilt after studying photos of real Snell’s windows: blurred, semi-transparent, no hard rim.
+
+### The line
+
+The hardest pixels in the game sit on the waterline when the camera is half under. The first version solved that line just 1.2 m out, across 9 screen columns, on the swim physics’ swell, which had no chop and no sideways push. It could sit up to 0.4 m off the waves actually drawn. My note was short:
+
+> “Water line must cover more distance & must not bleed underwater or wave to air.”
+> — Shifat Masud
+
+Now the line is solved for 25 screen columns, smoothed with a spline, on the exact waves the graphics card draws, out to 250 m. One shared function cuts the sea, tints the underwater half, draws the soft white meniscus and stops the god rays, so they can never disagree again. It only runs while the lens straddles the surface: about 500 wave evaluations a frame. During the speed pass it got 33% cheaper (0.41 → 0.28 ms a frame) and was checked bit-identical over 300 random camera poses.
+
+Diving is one world too. Haze, seabed, kelp and terrain blend over the first metres of a dive instead of switching at the surface, and the half-under view uses the same fog as the dive itself.
+
+**The mind.** People look at edges. Where two things meet is where the brain checks whether a scene is real, and one disagreement there undoes a hundred good pixels everywhere else.
+
+**Steal this.** When several effects meet at a line, compute the line once and make every effect read it. Agreement at the border matters more than detail on either side.
+
+## The post-process stack: five passes, in order
+
+*Diagram: One frame, top to bottom. Every pass after the first works on a finished picture, so the order decides what each one can see.*
+
+A frame of Shade Verse isn’t drawn once. It’s drawn, then handed down a short line of passes, and each one works on the finished picture the last one left. The order isn’t a detail; it decides what each pass can see.
+
+- **The world, at 0.8 resolution.** Every device draws the world at a fixed 0.8 pixel density. Inside that, the sea, the heaviest shader in the game, gets its own path: the world draws first without it, the sea draws alone at half pixel density with the world’s depth already filled in so it tucks under every edge, and then it’s laid back in at full size with a per-pixel depth test. See-through things (particles, glass, rays) go on top.
+- **Ink outline.** One pass reads the depth of the frame and inks an edge wherever depth jumps, but only on the nearer side, so the line stays 1 px and sits inside the silhouette. It fades out between 22 and 55 m. Surfaces carry a quiet tag in the alpha channel: lights are never inked, water is never inked, and grass inks only the outline of the whole meadow, not every blade. The same pass paints the underwater half and the meniscus when the camera is half under.
+- **Smoothing.** Edge smoothing (FXAA), plus a gentle sharpen close to the camera: full within about 6 m, gone by 28 m, never on the sky, clamped so it can’t halo.
+- **Glow.** Only things tagged as lights are drawn again, into a target a quarter of the size, blurred there, and added onto the frame with a single lookup. Always on, day and night.
+- **Heroes in HD.** The world is scaled up to the screen, and then Shadow and Ghost are drawn again at the screen’s full resolution (up to 2×), depth-tested so trees and buildings still hide them.
+
+![Same frozen frame, zoomed 2×, with passes switched off in the debug build. Without ink, the rooftops melt together. Without glow, the lamps are just dots.](https://shade-verse-case-study.vercel.app/media/post-passes.jpg)
+
+### Why this order
+
+Ink comes before smoothing, so the smoothing softens the ink lines too. Glow comes after ink, so lights spill over the outlines and never get inked themselves. Heroes come last, so they stay crisp over everything, including the glow.
+
+During the speed pass we tried to merge these passes, and the numbers said no. Smoothing reads 9 neighbouring pixels of the outlined frame, so a merged pass would have to run the outline 9 times per pixel. Folding the glow into the smoothing would save one cheap pass, under 1%, and round the colours slightly differently. And the last pass is a lock. Five passes it stays.
+
+**The mind.** Order is meaning. The same five steps in a different order make a different picture, the way the same words in a different order make a different sentence.
+
+**Steal this.** Write your post-process passes down in order, with one sentence each on why it sits in that slot. If you can’t say why, it’s probably in the wrong one.
+
+## Speed is mostly what you don’t draw
+
+![The regression sheet. Columns: before the speed pass (phone), after it (phone), after it (laptop). Rows: title, street, harbor, island, ocean, swim, underwater. The look didn’t change. (In the harbor row the hero had already dropped into the water: timing, not a look change.)](https://shade-verse-case-study.vercel.app/media/perf-regression.jpg)
+
+On Nov 2 I asked Zero for a long list of everything that could make the game faster, and then to work through all of it. One rule: **measure first, and cut only if you can’t see the cut.** Every idea was timed on a pinned phone-sized test with identical before and after shots, and nothing shipped if the shots differed.
+
+Thirteen changes shipped. Thirteen ideas died on the numbers. Almost everything that shipped is the same idea in different clothes: **the fastest thing to draw is the thing you don’t draw.**
+
+### What shipped
+
+- **Don’t draw what’s far away.** Lilies past 420 m: −145k triangles, everywhere. Harbor rooftop props only near the harbor: −30k. Far lily patches as simple pads: island 93k → 57k. The park ground grid: 41k → 18k, same look.
+- **Don’t draw what’s behind you.** Culling on the static island and harbor meshes. The crowd, drones and robots outside the camera view are packed out of the draw: street −14% triangles, harbor −19% and 5 fewer draw calls.
+- **Don’t do the same work twice.** Every sea vertex was computing the full wave maths twice at the same point, once for shape and once for lighting. One pass now, same values. The waterline solve: 0.41 → 0.28 ms a frame, bit-identical. The glow blur runs once at quarter size and is added with one lookup instead of 13. No new objects created every frame, so no garbage-collection stutter.
+- **Draw fewer pixels.** The world renders at a fixed 0.8 pixel density on every device while the heroes stay sharp. The biggest single cut.
+- **Carry less.** Models 2.8 → 0.82 MB, losslessly compressed. Voice lines are decoded when first heard instead of all at once: about 93 → 5 MB of memory.
+
+![The crowd cull, checked on the same frozen frame with the change switched off and on. Nothing on screen moves.](https://shade-verse-case-study.vercel.app/media/perf-crowd.jpg)
+
+How the timings were taken: in a headless browser with a software renderer, on a shared machine, which is far slower than a real phone. They are good for before/after on the same scene, not as frame rates. The glow change: phone harbor 348 → 320 ms per frame, island 381 → 364, ocean 336 → 315. The sea change: high sea views about 360–420 → 230 ms, and because the machine was busy with other work at the time, treat that one as indicative.
+
+### What we threw away, and why
+
+This list taught me more than the first one.
+
+- **Merging the screen passes.** The outline would have to run 9 times per pixel; the only safe merge saved under 1%.
+- **Smaller textures.** There are only 37, all preloaded on Play. Going lower would blur the ground at grazing angles.
+- **Splitting big meshes** so their off-screen parts skip drawing. Those parts are plain static shapes and cheap to throw away; splitting would add 5–15 draw calls that cost a phone more than they save.
+- **Merging draw calls.** Almost every draw has its own material, so nothing merges without changing the look. Skipping empty draws was exact, but saved 0.05 ms, so it was reverted.
+- **Thinning the see-through layers.** Even removing all of them would save 10–24%, spread over 24–43 small glows and halos. Nothing could go without being missed.
+- **Re-encoding the audio.** There are no lossless masters, so it would be compressing already-compressed sound. The best setting cut only 28% and audibly changed the clips.
+- And a few that were already done or not worth it: there are no shadow maps to optimise, shaders already compile up front, idle effects already hide themselves, and the matrix updates cost 0.06 ms.
+
+**The mind.** Deleting an idea feels like losing something, so we tend to ship it anyway. Here every dropped idea was a win: it was a visible change or a wasted hour that never reached the game.
+
+**Steal this.** Make the long list, then let the numbers kill most of it. Ship only what you can measure and can’t see.
+
+## Copy the real world, not other games
+
+![Real photo on the left of each pair, ours on the right: the aurora (seventh version), the moon, the rainbow.](https://shade-verse-case-study.vercel.app/media/sky-refs.jpg)
+
+The night of Nov 1 was the sky. Every element was rebuilt by putting a real photograph next to the game and changing the game until the two felt the same:
+
+- **The moon** started from a real photo of the full moon, then became what a camera actually sees on a fjord at night: a blown-out glowing disc, a bright corona and a big milky halo.
+- **The sun** is a blown-out white-hot disc, golden when low, with a wide glow and no ring.
+- **The rainbow** has bright saturated feet fading toward the top, a brighter sky inside the bow and the dark band between the two bows, like the photo.
+- **The stars** were blocky square dots. Now they are round points with a long tail of sizes and brightness, and a gentle twinkle.
+- **The aurora** took seven versions, each checked against a real photo: from faint curtains, to a true 3D curtain sampled at 7 heights, to purplish light on the tops.
+
+Clouds, moon, stars, aurora and rainbow are all mirrored in the sea through the same shared functions, so the sky and its reflection run on one clock. On Nov 2 I locked the whole sky as a restore point.
+
+### The fire that looked fake
+
+![The robot KO burst at six moments, before (top) and after (bottom).](https://shade-verse-case-study.vercel.app/media/ko-before-after.jpg)
+
+When a robot went down it burst into solid orange shapes, a spray of cones, a ring on the ground and a pale cyan disc. It read as a cartoon. I asked for “softer, realistic particles glow based burst”, then “Study real first burst explosion images”, then one word: “Fire”.
+
+![The reference sheet: real explosion and fireball photographs, studied before a single particle changed.](https://shade-verse-case-study.vercel.app/media/ko-refs.jpg)
+
+Zero studied 12 real photos of explosions and wrote down what they show. A white-yellow flash for a few frames. A lumpy, cauliflower-shaped fireball that grows fast, then slows, cooling from white to yellow to orange to deep red. Dark smoke rolling up as it cools. Sparks that streak, slow down in the air, then fall.
+
+The burst was rebuilt from that list: a 0.1 s flash, 14 lumpy fireball puffs on that cooling ramp, 26 sparks with glowing streaks, and 10 dark smoke puffs lit warm from below while they’re young. A few sparks carry a faint tint of the hero who landed the KO. It went from 5 draw calls to 2, with no measurable frame cost. The first try got one thing wrong: the particles were about 2.6× too big, and it looked like a flat disc. Fixed before it shipped.
+
+![The new burst from 0.03 to 1.2 seconds: flash, fireball, sparks, smoke.](https://shade-verse-case-study.vercel.app/media/ko-strip.jpg)
+
+The same rule spread to every effect on Nov 2: **soft, glowing, cinematic, no hard edges.** The comic hit-star became a white-hot core with sparks and a soft bloom. Every solid ring was removed, from punches to the Slam shockwave. The aim-lock went from a sharp cyan square to soft glints in the hero’s colour, and the Web Shock and web shot followed: purple for Shadow, pink for Ghost.
+
+![The aim-lock marker, before and after: a sharp cyan square became soft glints in the hero’s own colour.](https://shade-verse-case-study.vercel.app/media/aimlock.jpg)
+
+**The mind.** What we “know” about fire, moonlight or a rainbow is a cartoon our memory keeps. A photo corrects it in seconds, because it shows the things memory throws away: the blown-out centre, the smoke, the dark band.
+
+**Steal this.** Before you design an effect, collect ten photos of the real thing and write down what you actually see. Then build that list, not your memory.
+
+## A hold is a duration, not a frame count
+
+*Diagram: Black ticks are frames. When one frame takes too long, a frame-counted hold never gets checked in time. A timed hold always does.*
+
+On Nov 2 the phone buttons were merged the way the desktop works: **tap** the web button to spring, **hold** it to swing; tap to fire a web shot, hold for a Web Shock. A hold is anything longer than 220 ms. No cooldowns anywhere.
+
+Then a real bug turned up on desktop. A press only became a hold if a frame happened to run after the 220 ms mark while the button was still down. On a slow frame, a hitch or a weak laptop, that frame never came in time, and a 300–450 ms hold was read as a tap: you meant to swing and you sprang instead. Measured with a scripted test: **8 of 24 desktop holds misread before, 0 of 24 after.** The fix is one idea: decide hold or tap from the actual press time at release, not from whether a frame noticed. A swing caught late is held for 2 frames so the game always sees it. The phone buttons already used a timer and read 0 of 24 wrong both times; they now also check the press time at release, in case the timer runs late.
+
+### The other small things that make it feel solid
+
+- **Swing, spring and flight work from anywhere**: from a wall crawl and from a rooftop, because I said they must.
+- **The title screen sizes itself from its own box**, not from the window’s height, so a stale browser viewport can’t push the logo or the Play button off a phone screen.
+- **A guard on the jump button.** A stale or duplicate touch could throw an error on the jump button, the move pad and the camera drag; they now guard it the way the other buttons already did.
+- **Dead code out.** A tree kit that was never placed in the world was still loading 10 models (252 KB) every time you pressed Play. Removing the unused code removed that wait too.
+
+**The mind.** Players feel input in time, not frames. A swing that sometimes turns into a spring doesn’t feel like a bug to them; it feels like the game doesn’t listen. Trust in the controls is lost in exactly those moments.
+
+**Steal this.** Measure every press in milliseconds from the press itself, never by counting frames. Then test it on a deliberately slow machine.
+
+## Restore points let you be brave
+
+*Diagram: Every restore point is a named tag on GitHub. Going back is one word.*
+
+Most of the best things in this game started as “lets try”. That only works if going back is free. So whenever something felt right, it became a named restore point: a tag on GitHub I can return to with one word, and a line in the lock file so nobody changes it by accident.
+
+- **water** (Oct 31). The water looks I locked that afternoon.
+- **boss** (Oct 31). Taken right after the boss got its new face, before the islands and the weather went in.
+- **sky** (Nov 2). Sun, moon, aurora, clouds and the underwater look.
+- **fire-ko** (Nov 2). The fire KO burst, the soft aim-lock, the sea speedup, the crowd cull and the new water line.
+
+The undo button got used, and that’s the point. City reflections streaking down the wet streets: I said “looks bad”, and they were gone in five minutes. Storm spray across the sea: tried, reverted. Drops on the lens after a dive: tried, reverted. When my phone stopped drawing the sea one night, two sea shader rewrites came out at once, and went back in a minute later. None of it was scary, because nothing could be lost.
+
+**The mind.** People take bigger creative risks when failure is cheap and recoverable. A restore point is psychological safety for a project: it turns “what if this breaks it” into “let’s see”.
+
+**Steal this.** Name a restore point every time something feels right, and lock what’s in it. You’ll try bolder things when going back costs one word.
+
+## In progress: learning to move like Spider-Man
+
+**In progress.** Nothing in this chapter has shipped yet; it will fill in as it does.
+
+On Nov 2 I sent Zero a short clip of *Ultimate Spider-Man* swinging through the city at night, with one line: “Learn animations from this.” It was studied frame by frame, and the notes read like a choreographer’s:
+
+- **Swing.** The body stays laid out for a few frames after the web hits, then hangs straight under the line. The legs whip forward on the way up, and the release comes near the top, into a backflip.
+- **Big drops.** A tucked cannonball, then the body spreads.
+- **Freefall.** Spread like a skydiver.
+- **Landing.** A crouch with one hand down; a roll on the hard ones.
+
+They go onto Shadow and Ghost in that order: swing first, then the release flip, the freefall, the landing, and a lean into the run. The controls and timings stay exactly as they are. Only how the body moves changes.
+
+**Steal this.** When you want a feeling, find the moment in an existing work that already has it, and study it frame by frame. Feel is made of timing you can measure.
+
 ## Technologies & tools
 
-- **3D and rendering:** three 0.169, React Three Fiber 8.17, custom GLSL shaders (water, ground and sand, grass, cel outline), a selective bloom pass, FXAA.
+- **3D and rendering:** three 0.187, React Three Fiber 8.17, custom GLSL shaders (water, ground and sand, grass, cel outline), a selective bloom pass, FXAA.
 - **App:** React 18.3, TypeScript 5.6, Vite 5.4, Framer Motion 11 for the title screen motion, GSAP 3.12.
 - **World:** Polyfork low-poly models (buildings, trees, footbridge, robots), modified in code. Poly Haven CC0 textures for bark, leaves and shrubs.
 - **Testing:** TypeScript checks, Vite builds, and puppeteer scripts in headless Chrome with a software renderer: motion, combat, walls, audio, environment, a 5.5-minute soak. A debug build exposes test hooks that the release build never ships.
@@ -293,6 +504,7 @@ On the night of the environment pass I gave one instruction, "Now I give you ful
 - **Game design, direction & development:** Shifat Masud, built with Zero.
 - **3D models:** Polyfork low-poly models, used and modified inside Shade Verse.
 - **Textures:** Poly Haven CC0 bark, leaf and shrub textures.
-- **Inspiration:** Marvel's Spider-Man on PC, for the control scheme and the feel of the swing.
+- **Inspiration:** Marvel's Spider-Man on PC, for the control scheme and the feel of the swing. Ultimate Spider-Man, for the traversal animation study.
+- **Reference photos:** Real photographs, many from Wikimedia Commons (explosions, the moon, rainbows, aurora, Snell’s window), studied as references and shown small beside our frames.
 
 To everyone in my life: you inspired this.
