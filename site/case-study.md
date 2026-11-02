@@ -443,20 +443,59 @@ The undo button got used, and that’s the point. City reflections streaking dow
 
 **Steal this.** Name a restore point every time something feels right, and lock what’s in it. You’ll try bolder things when going back costs one word.
 
-## In progress: learning to move like Spider-Man
+## Learning to move from a 30-second clip
 
-**In progress.** Nothing in this chapter has shipped yet; it will fill in as it does.
+On Nov 2 I sent Zero a 30-second clip of *Ultimate Spider-Man* swinging through the city at night, with one line: “Learn animations from this.”
 
-On Nov 2 I sent Zero a short clip of *Ultimate Spider-Man* swinging through the city at night, with one line: “Learn animations from this.” It was studied frame by frame, and the notes read like a choreographer’s:
+Our heroes already went where the physics sent them. Their bodies just didn’t feel any of it. The whole swing was one fixed pose: a lean and one arm up. Every fall and every web spring froze the jump halfway. Landings were straight legs tipping forward, which read like a stumble. And the run leaned about 2° whether you jogged or sprinted.
 
-- **Swing.** The body stays laid out for a few frames after the web hits, then hangs straight under the line. The legs whip forward on the way up, and the release comes near the top, into a backflip.
-- **Big drops.** A tucked cannonball, then the body spreads.
-- **Freefall.** Spread like a skydiver.
-- **Landing.** A crouch with one hand down; a roll on the hard ones.
+So the clip was studied the way an animator would study it: at 10 frames a second, one move at a time, writing down poses and how many frames each phase lasts. The notes read like a choreographer’s. After the web hits, the body stays laid out along its path for 4–5 frames before the line pulls it round. After a release, it’s upside down 0.2–0.3 s later and upright again by about 0.6 s. Those numbers became the targets.
 
-They go onto Shadow and Ghost in that order: swing first, then the release flip, the freefall, the landing, and a lean into the run. The controls and timings stay exactly as they are. Only how the body moves changes.
+### Swing: hang, lag, whip
 
-**Steal this.** When you want a feeling, find the moment in an existing work that already has it, and study it frame by frame. Feel is made of timing you can measure.
+The body now hangs from the line hand and lags the rope like a pendulum on a spring. Right after the web hits it’s still laid out along the direction of travel. At the bottom it hangs straight under the line. On the way up the legs, which trailed behind on the way down, whip forward with the knees up, and the free hand comes up to join the line.
+
+![The swing, before (top) and after (bottom): same side camera, 8 frames over 1.5 s. Before, one fixed pose. After, the body lags the rope, hangs under the line, then whips its legs forward.](https://shade-verse-case-study.vercel.app/media/move-swing.jpg)
+
+### Release: keep the spin
+
+Letting go on the way up carries the swing’s spin into a tucked backflip: knees to the chest, upside down about 0.25 s after the release, upright again at 0.62 s. The flip is one smooth curve from the release angle to a full turn, so it never pops at either end. A low release skips it, and a new web, a landing or an attack takes over from wherever the body is.
+
+![Letting go on the way up, before and after: 8 frames from just before the release to 0.8 s after. After, the swing’s spin carries on into a tucked backflip.](https://shade-verse-case-study.vercel.app/media/move-release-flip.jpg)
+
+### Freefall: a skydiver who looks down
+
+A fall turns the body belly-down into a skydiver’s frog: arms wide, knees apart, back arched, head up. It banks into turns, and it grows stronger the faster you fall. The part I like most: it checks how far the roof or street below is, and turns back to feet-first in the last ~0.35 s. Nobody lands on their belly, and short hops stay upright.
+
+![A fall from the top of a jump to a roof, before and after. After, a skydiver frog that turns back feet-first just before touchdown. (The glowing orb in some frames is the world, not the hero.)](https://shade-verse-case-study.vercel.app/media/move-freefall.jpg)
+
+### Landing: the drop decides the crouch
+
+Touchdown is a crouch now, deeper for a bigger drop. A hard landing is the superhero landing: one knee down, one hand planted, the other arm out behind, held about 0.2 s and pushed out of in 0.55 s total.
+
+![Hard and soft landings, before and after. Before, straight legs tipping forward. After, a crouch, and on hard drops the superhero landing.](https://shade-verse-case-study.vercel.app/media/move-landing.jpg)
+
+### Web spring: my own catch
+
+Halfway through, I watched the clip again and saw something nobody had listed: “It has reference to improve our web spring too.” The zip moments. Now the body coils for a few frames first, knees in, chest curled. Then the yank snaps it in line with the pull, head first, legs trailing, with a stretch of about 9% along the body right as the line goes taut. Letting go while still rising rolls the pull into a front tuck.
+
+![The web spring, before and after: coil, yank, release, flip. After, the body snaps in line with the pull, head first, and stretches a little as the line goes taut.](https://shade-verse-case-study.vercel.app/media/move-spring.jpg)
+
+### Run: lean into the speed
+
+The run leans with speed: nothing at a jog, about 17° at a full sprint, a bit more while you speed up and back when you brake. The head stays level the whole time.
+
+![Running from a jog to a sprint, before and after. Before, about 2° of lean at any speed. After, up to about 17° at a full sprint, head level.](https://shade-verse-case-study.vercel.app/media/move-run-lean.jpg)
+
+### What stayed out
+
+A wall run was on the list. The clip has a quick hug of a wall and a vault over a ledge, but no long run up a building to copy. So we didn’t make one up. A move you can’t see in your reference is a move you’d be guessing at, and guessed motion is the stiff kind.
+
+One rule held across all six: only the body changes. Input, timing, physics and hitboxes are exactly what they were, so the game plays the same and simply reads better. Everything is procedural, in one file of about 230 lines, with no animation files to download. It works on both Shadow and Ghost, the ink outlines follow every pose, and each move shipped as its own commit. The six landed within 27 minutes of each other.
+
+**The mind.** We read weight from delay. A body that turns the instant a force turns looks like it weighs nothing. One that coils before it moves (anticipation), lags behind the pull, and keeps going after the force stops (follow-through) looks heavy and alive. Those are two of the oldest rules in animation, and they’re the whole trick here: almost every move above is a body arriving a little late.
+
+**Steal this.** Study your reference in frames, not in feelings. Count how long each phase lasts, make those counts your targets, and change only the body, never the controls. The game gets better without anyone having to learn it again.
 
 ## Technologies & tools
 
