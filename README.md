@@ -5,7 +5,7 @@ Swing physics, combat, a hybrid reflection/refraction lake, and two real devices
 
 Read it: https://shade-verse-case-study.vercel.app
 
-Play the game: https://shade-verse-preview.vercel.app/
+Play the game: https://shade-verse.vercel.app/
 
 ## Build
 
