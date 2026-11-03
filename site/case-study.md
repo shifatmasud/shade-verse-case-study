@@ -503,7 +503,7 @@ Shade Verse has two trailers, and neither was cut in a video editor. Both are pr
 
 The same code runs two ways. Open the page and press Play, and your browser renders every frame live from the game. Or a script renders it frame-exact at 24 fps into an MP4, with the audio mixed from the same timeline. Press **C** while it plays to read the code of the shot on screen.
 
-### v1 · The Iron Tide
+### v1 · Every City Has a Shadow
 
 59 seconds, 24 cuts from 15 coded shots. "Every city has a shadow." Live: https://shade-verse-trailer-v1.pages.dev/ · Source: https://github.com/shifatmasud/shade-verse-trailer-v1
 
