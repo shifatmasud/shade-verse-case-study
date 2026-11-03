@@ -497,6 +497,22 @@ One rule held across all six: only the body changes. Input, timing, physics and 
 
 **Steal this.** Study your reference in frames, not in feelings. Count how long each phase lasts, make those counts your targets, and change only the body, never the controls. The game gets better without anyone having to learn it again.
 
+## The trailer is code
+
+Shade Verse has two trailers, and neither was cut in a video editor. Both are programs. A director script pauses the game as a game (no player input, no AI choices) and stages the real engine shot by shot: where Shadow, Ghost and the Captain stand, the robots, the time of day, rain, lightning, the aurora, slow motion and a programmed camera. Then it steps the engine frame by frame, timed to the score and the voices.
+
+The same code runs two ways. Open the page and press Play, and your browser renders every frame live from the game. Or a script renders it frame-exact at 24 fps into an MP4, with the audio mixed from the same timeline. Press **C** while it plays to read the code of the shot on screen.
+
+### v1 · The Iron Tide
+
+59 seconds, 24 cuts from 15 coded shots. "Every city has a shadow." Live: https://shade-verse-trailer-v1.pages.dev/ · Source: https://github.com/shifatmasud/shade-verse-trailer-v1
+
+### v3 · The trailer is code
+
+2 minutes 20, 38 shots, built like the *Spider-Man 2* reveal: a villain's monologue over calm shots of ordinary life, then silence, "Oh, we will." / "Together.", then heavy combat. Live: https://shade-verse-trailer.pages.dev/ · Source: https://github.com/shifatmasud/shade-verse-trailer
+
+**Steal this.** If your game can be paused and posed from code, your trailer can be a program. Every shot is then a function you can fix and re-run, and the same timeline gives you a live version and a video file.
+
 ## Technologies & tools
 
 - **3D and rendering:** three 0.187, React Three Fiber 8.17, custom GLSL shaders (water, ground and sand, grass, cel outline), a selective bloom pass, FXAA.
