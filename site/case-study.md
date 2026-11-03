@@ -505,11 +505,11 @@ The same code runs two ways. Open the page and press Play, and your browser rend
 
 ### v1 · The Iron Tide
 
-59 seconds, 24 cuts from 15 coded shots. "Every city has a shadow." Live: https://shade-verse-trailer-v1.pages.dev/ · Source: https://github.com/shifatmasud/shade-verse-trailer-v1
+59 seconds, 24 cuts from 15 coded shots. "Every city has a shadow." Live: https://shade-verse-trailer-v1.pages.dev/ · GitHub repo: https://github.com/shifatmasud/shade-verse-trailer-v1
 
 ### v3 · The trailer is code
 
-2 minutes 20, 38 shots, built like the *Spider-Man 2* reveal: a villain's monologue over calm shots of ordinary life, then silence, "Oh, we will." / "Together.", then heavy combat. Live: https://shade-verse-trailer.pages.dev/ · Source: https://github.com/shifatmasud/shade-verse-trailer
+2 minutes 20, 38 shots, built like the *Spider-Man 2* reveal: a villain's monologue over calm shots of ordinary life, then silence, "Oh, we will." / "Together.", then heavy combat. Live: https://shade-verse-trailer.pages.dev/ · GitHub repo: https://github.com/shifatmasud/shade-verse-trailer
 
 **Steal this.** If your game can be paused and posed from code, your trailer can be a program. Every shot is then a function you can fix and re-run, and the same timeline gives you a live version and a video file.
 
