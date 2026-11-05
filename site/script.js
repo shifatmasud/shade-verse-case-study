@@ -133,9 +133,9 @@ if(pl&&vis)live.add(P);else live.delete(P);if(live.size&&!raf)raf=requestAnimati
 const load=()=>{if(v.preload==='none'){v.preload='auto';v.load()}};/* a host that answers without byte ranges leaves the clip unseekable (and iOS Safari will not play it at all): then the clip is fetched once as a blob, which is seekable everywhere, and swapped in where it was */
 let blob=0,want=-1;const canSeek=()=>{const d=v.duration;return v.seekable.length>0&&d>0&&v.seekable.end(v.seekable.length-1)>=d-.5};const toBlob=()=>{if(blob)return;blob=1;const s=v.currentSrc||(v.querySelector('source')||{}).src;if(!s)return;fetch(s).then(r=>r.ok?r.blob():Promise.reject()).then(bl=>{const t=want>=0?want:v.currentTime,pl=!v.paused||(vis&&!user&&!RM);want=-1;v.addEventListener('loadedmetadata',()=>{try{v.currentTime=Math.min(t,(v.duration||t)-.05)}catch(e){}if(pl)play()},{once:true});v.src=URL.createObjectURL(bl);v.load()}).catch(()=>{blob=0})};/* R-video1: no blob fetch on load any more; a clip is fetched as a seekable blob only when someone actually scrubs it (or it fails to play), so a scroll-through downloads each clip once */const so=v.querySelector('source');if(so)so.addEventListener('error',toBlob);v.addEventListener('error',toBlob);
 const play=()=>{load();const r=v.play();if(r&&r.catch)r.catch(()=>{state()})};
-const toggle=()=>{if(v.paused||v.ended){user=0;play()}else{user=1;v.pause()}showUi()};
+const toggle=()=>{if(v.paused||v.ended){user=0;P.owner=1;play()}else{user=1;P.owner=0;v.pause()}showUi()};
 const showUi=(ms)=>{vp.classList.add('is-ui');clearTimeout(hideT);if(!v.paused)hideT=setTimeout(()=>{if(!drag&&!vp.matches(':focus-within'))vp.classList.remove('is-ui')},ms||2200)};
-['play','playing','pause','ended','loadedmetadata','durationchange'].forEach(e=>v.addEventListener(e,()=>{if(e==='loadedmetadata'||e==='durationchange'){dur.textContent=fmt(v.duration);sc.setAttribute('aria-valuemax',Math.floor(v.duration||0))}state();if(e==='pause'||e==='ended')showUi()}));
+['play','playing','pause','ended','loadedmetadata','durationchange'].forEach(e=>v.addEventListener(e,()=>{if(e==='play'&&!fsEl()){for(const Q of P0){if(Q&&Q!==P&&!Q.v.paused)Q.v.pause()}}if(e==='loadedmetadata'||e==='durationchange'){dur.textContent=fmt(v.duration);sc.setAttribute('aria-valuemax',Math.floor(v.duration||0))}state();if(e==='pause'||e==='ended')showUi()}));
 v.addEventListener('progress',()=>P.paint());v.addEventListener('timeupdate',()=>{if(!live.has(P))P.paint()});
 big.addEventListener('click',toggle);pp.addEventListener('click',toggle);
 v.addEventListener('click',e=>{if(e.pointerType==='mouse'||e.detail&&FINE)toggle();else{vp.classList.contains('is-ui')?vp.classList.remove('is-ui'):showUi(3000)}});
@@ -152,8 +152,13 @@ e.preventDefault();t=Math.min(d-.05,Math.max(0,t));if(!canSeek()){want=t;toBlob(
 const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
 fs.addEventListener('click',()=>{if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}else if(vp.requestFullscreen){vp.requestFullscreen().catch(()=>{})}else if(vp.webkitRequestFullscreen){vp.webkitRequestFullscreen()}else if(v.webkitEnterFullscreen){load();v.webkitEnterFullscreen()}});
 const fsc=()=>{const on=fsEl()===vp;setIc(fs,on?'fsx':'fs');fs.setAttribute('aria-label',on?'Exit full screen':'Full screen')};document.addEventListener('fullscreenchange',fsc);document.addEventListener('webkitfullscreenchange',fsc);
-P.setVis=x=>{vis=x;if(x){load();if(!RM&&!user&&v.paused)play()}else if(!v.paused&&!fsEl())v.pause();state()};
+P.setVis=x=>{vis=x;if(x)load();else if(!v.paused&&!fsEl())v.pause();state();arb()};P.play=play;P.isVis=()=>vis;P.isUser=()=>user;P.owner=0;
 state();return P}).filter(Boolean);
+/* Shifat Nov 4 11:58 PM "never autoplay 2 videos at once": one clip plays at a time. A clip the visitor started owns the stage; otherwise the visible clip nearest the viewport centre autoplays and every other one is paused. Any 'play' event pauses the rest. */
+function arb(){if(RM)return;const own=P0.find(Q=>Q.owner&&!Q.v.paused&&Q.isVis());if(own){if(!fsEl())P0.forEach(Q=>{if(Q!==own&&!Q.v.paused)Q.v.pause()});return}
+let best=null,bd=1e9;for(const Q of P0){if(!Q.isVis()||Q.isUser())continue;const r=Q.vp.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-innerHeight/2);if(d<bd){bd=d;best=Q}}
+if(!fsEl())P0.forEach(Q=>{if(Q!==best&&!Q.v.paused)Q.v.pause()});if(best&&best.v.paused){best.owner=0;best.play()}}
+let arbRaf=0;addEventListener('scroll',()=>{if(arbRaf)return;arbRaf=requestAnimationFrame(()=>{arbRaf=0;arb()})},{passive:true});
 if(!('IntersectionObserver' in window)){P0.forEach(P=>P.setVis(1));return}
 const io=new IntersectionObserver(es=>{for(const e of es){const P=P0.find(p=>p.vp===e.target);if(P)P.setVis(e.isIntersecting)}},{rootMargin:'200px 0px',threshold:.15});P0.forEach(P=>io.observe(P.vp));
 })();
