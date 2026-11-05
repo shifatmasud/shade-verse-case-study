@@ -279,3 +279,5 @@ article h2{font-size:clamp(40px,5.6vw,76px);max-width:none}
 .site-footer .gift-sticker.is-gl .gift-sticker__cv{opacity:0}
 /* R6.94: the sticker's 221 px canvas reached 0.5 px past the right edge between 761 and ~1290 px (a 1 px sideways scroll); the phone rule, widened to every width where the footer is full-bleed */
 @media (max-width:1320px){.site-footer:has(.gift-sticker){overflow-x:clip}}
+/* Shifat Nov 5 12:13 AM: button labels are Inter Medium, not Regular */
+.pill,.pill .pill__l,.big-btn,.big-btn .ir,.big-btn .ink,.toc a{font-weight:500}
