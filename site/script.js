@@ -65,7 +65,8 @@ function flood(b,p){measure(b);b.on=true;b.drainAt=0;const to={x:p.x,y:p.y,r:far
 const from=b.fl.r>.5?{...b.fl}:{x:p.x,y:p.y,r:0};b.flA={a:from,b:to,t0:now(),d:K.FLOOD,e:EIN};kick()}
 function drain(b,p){b.on=false;b.drainAt=0;measure(b);if(RM){b.fl={x:p.x,y:p.y,r:0};b.flA=null;kick();return}let from={...b.fl};
 if(from.r>=farR(b,from.x,from.y)-1)from={x:p.x,y:p.y,r:farR(b,p.x,p.y)};b.flA={a:from,b:{x:p.x,y:p.y,r:0},t0:now(),d:K.DRAIN,e:EINOUT};kick()}
-function roll(b){if(RM)return;if(b.roll<b.rollB1-.02)return;b.rollA0=b.roll;b.rollB1=Math.floor(b.roll+.02)+1;b.rollT0=now();kick()}
+const STATIC_LABELS=true;/* Shifat Nov 4 10:07 PM: label never rolls (portfolio parity); ink flood, squash, ripple, magnet stay */
+function roll(b){if(STATIC_LABELS||RM)return;if(b.roll<b.rollB1-.02)return;b.rollA0=b.roll;b.rollB1=Math.floor(b.roll+.02)+1;b.rollT0=now();kick()}
 function press(b,p){if(RM)return;b.sx.f=b.sy.f=K.SQ_F;b.sx.z=b.sy.z=K.SQ_Z;b.sx.t=K.SQ_X;b.sy.t=K.SQ_Y;b.rip={x:p.x,y:p.y,t0:now()};kick()}
 function release(b){b.sx.f=b.sy.f=K.REL_F;b.sx.z=b.sy.z=K.REL_Z;b.sx.t=1;b.sy.t=1;kick()}
 function frame(){raf=0;const t=now(),dt=Math.min(1/20,Math.max(0,t-last));last=t;let live=false;
