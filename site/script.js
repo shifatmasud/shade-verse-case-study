@@ -112,10 +112,11 @@ ink / white / silver, Phosphor icons, the portfolio's ink buttons. Loops still a
 const vps=[...document.querySelectorAll('.vp')];if(!vps.length)return;
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches,FINE=matchMedia('(hover: hover) and (pointer: fine)').matches,ink=window.__ink;
 const IC={"play": "M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z", "pause": "M216,48V208a16,16,0,0,1-16,16H160a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h40A16,16,0,0,1,216,48ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Z", "fs": "M220,48V88a12,12,0,0,1-24,0V60H168a12,12,0,0,1,0-24h40A12,12,0,0,1,220,48ZM88,196H60V168a12,12,0,0,0-24,0v40a12,12,0,0,0,12,12H88a12,12,0,0,0,0-24Zm120-40a12,12,0,0,0-12,12v28H168a12,12,0,0,0,0,24h40a12,12,0,0,0,12-12V168A12,12,0,0,0,208,156ZM88,36H48A12,12,0,0,0,36,48V88a12,12,0,0,0,24,0V60H88a12,12,0,0,0,0-24Z", "fsx": "M148,96V48a12,12,0,0,1,24,0V84h36a12,12,0,0,1,0,24H160A12,12,0,0,1,148,96ZM96,148H48a12,12,0,0,0,0,24H84v36a12,12,0,0,0,24,0V160A12,12,0,0,0,96,148Zm112,0H160a12,12,0,0,0-12,12v48a12,12,0,0,0,24,0V172h36a12,12,0,0,0,0-24ZM96,36A12,12,0,0,0,84,48V84H48a12,12,0,0,0,0,24H96a12,12,0,0,0,12-12V48A12,12,0,0,0,96,36Z"};
-const svg=(k,s)=>`<svg viewBox="0 0 256 256" width="${s}" height="${s}" fill="currentColor" aria-hidden="true"><path d="${IC[k]}"/></svg>`;
+const OPT={play:'translate(15 0)'};/* optical centre: the triangle's area centre sits on the box centre, so nudge it right ~6% of its size (same ratio at every size) */
+const svg=(k,s)=>`<svg viewBox="0 0 256 256" width="${s}" height="${s}" fill="currentColor" aria-hidden="true"><path d="${IC[k]}"${OPT[k]?` transform="${OPT[k]}"`:''}/></svg>`;
 const btn=(cls,label,k,s)=>`<button type="button" class="${cls}" aria-label="${label}"><span class="vp__ic ink-par">${svg(k,s)}</span><span class="ink" aria-hidden="true"><span class="vp__ic ink-par">${svg(k,s)}</span></span></button>`;
 const fmt=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
-const setIc=(b,k)=>b.querySelectorAll('path').forEach(p=>p.setAttribute('d',IC[k]));
+const setIc=(b,k)=>b.querySelectorAll('path').forEach(p=>{p.setAttribute('d',IC[k]);if(OPT[k])p.setAttribute('transform',OPT[k]);else p.removeAttribute('transform')});
 const live=new Set();let raf=0;const loop=()=>{raf=0;for(const P of live)P.paint();if(live.size)raf=requestAnimationFrame(loop)};
 const P0=vps.map(vp=>{const v=vp.querySelector('video');if(!v)return null;v.controls=false;v.removeAttribute('controls');
 const ui=document.createElement('div');ui.className='vp__ui';
