@@ -548,6 +548,45 @@ On the night of the environment pass I gave one instruction, "Now I give you ful
 
 > **Steal this:** Write the locks, demand a picture with every update, and keep observed and estimated in separate sentences. Then you can let the work run without watching it.
 
+## Light: one grade that follows the clock
+
+The grade is not a day filter baked into a still. The [final refinement, commit `94522e8`](https://github.com/shifatmasud/shade-verse/commit/94522e8), feeds the existing day and warm-phase values into one shared shader used by the world compositor and the native-resolution hero pass. Shadows and highlights shift with the time of day. A separate hue-and-saturation mask gives green-dominant foliage, grass and flowers a restrained sage treatment: cooler at night, greener and warmer by day. Water and glow-tagged pixels are excluded from that green treatment, so the lake and orbs keep their own color.
+
+![Earlier daytime park-grade review capture, with green ground and trees.](https://shade-verse-case-study.vercel.app/media/grade-day-before.jpg)
+![Later daytime park-grade review capture, with the final foliage-aware grade.](https://shade-verse-case-study.vercel.app/media/grade-day-after.jpg)
+
+These are desktop review stills from the same park, but the camera shifts slightly. They show daytime only; the short review clip also stays in day, so neither is a day-to-night time-lapse. The night response comes from the shipped grade reading the game's day/night values, not from these images.
+
+The orb is a controlled exception to the shared grade. The [orb update, commit `2b9c0d8`](https://github.com/shifatmasud/shade-verse/commit/2b9c0d8), removes the separate oversized glow shell and leaves one bright core. A small marker on that core tells the existing selective-bloom pass to strengthen its halo. The glow lives in the image; it does not cast physical light onto the buildings.
+
+![Final city review frame: Shadow, the glowing orb and the approved clean hood texture.](https://shade-verse-case-study.vercel.app/media/final-city-orb-hood.jpg)
+
+This final city frame shows the corrected hood; the texture fix later landed as [commit `ab5cd53`](https://github.com/shifatmasud/shade-verse/commit/ab5cd53), removing two white spots. It is final-character polish, not another lighting change.
+
+**The mind.** A grade should follow the world's clock and protect the colors that make a place recognizable.
+
+**Steal this.** Share one grade between the world and its hero, then use narrow masks for materials that need special care. Tag the few glowing cores instead of adding a second shell.
+
+## Shadows: the hero and the moving sky
+
+There are two scales of shadow here, and they need two different tools. In [commit `7e7b84e`](https://github.com/shifatmasud/shade-verse/commit/7e7b84e), Shadow's posed, animated mesh supplies its actual triangles to a WebGL 2 ray/triangle test. A texture-backed BVH is refit as the mesh deforms; the final shader traces toward the light and returns the hero's silhouette, rather than the old capsule-like proxy. This is a custom analytic shadow test, not hardware ray tracing or a general path tracer. The separate filtered depth map still handles buildings and world geometry. Shadow is the only analytic character caster; Ghost stays shadow-free.
+
+![Matched desktop shadow review before the true-mesh pass: Shadow and Ghost on a rooftop.](https://shade-verse-case-study.vercel.app/media/mesh-shadow-before.jpg)
+![Matched desktop shadow review after the true-mesh pass: Shadow's silhouette falls across the rooftop.](https://shade-verse-case-study.vercel.app/media/mesh-shadow-after.jpg)
+
+These matched 1280 × 720 review frames hold the camera and idle poses fixed. The feature review has its optional mood grade off, so read it for the shape of Shadow's cast shadow, not as the final color-grade reference.
+
+Clouds need a broader, softer shade. [Commit `5748345`](https://github.com/shifatmasud/shade-verse/commit/5748345) builds a linearly filtered 256 × 256 density field from the same procedural cloud noise, time and rain coverage as the sky. The compositor reconstructs each visible surface position, projects it toward a cloud layer along the sun direction and samples that field. The soft result attenuates the existing shadow visibility, fading at low sun and around the field's edges and horizon. It is a projected screen/compositor effect, not volumetric cloud geometry; the shared clock makes the sky and its shade move together.
+
+![Matched rooftop review with the cloud-shadow field off.](https://shade-verse-case-study.vercel.app/media/cloud-shadow-before.jpg)
+![The same rooftop view with soft cloud shade enabled.](https://shade-verse-case-study.vercel.app/media/cloud-shadow-after.jpg)
+
+The cloud pair is a separate matched desktop review; its broad change is intentionally subtler than the hero's silhouette. These captures document the visual effect, not frame rate on a phone or laptop.
+
+**The mind.** A moving hero and a drifting cloud have different shapes; one proxy should not be asked to stand in for both.
+
+**Steal this.** Match the method to the cause: trace the real mesh for a hero silhouette, use a shared low-resolution field for soft cloud shade, and keep ordinary depth shadows for the city.
+
 ## What I'd tell you to steal
 
 - Budget for the weakest device you care about. Write its numbers down first, and measure there before you call anything fast.
