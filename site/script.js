@@ -92,10 +92,20 @@ function bind(el,kind,o={}){if(!el||btns.some(b=>b.el===el))return null;const in
 const b={el,kind,ink,mag:o.magnet!==false,par:q('.ink-par'),rollA:q('.ir-a'),rollB:q('.ir-b'),arrA:q('.ia-a'),arrB:q('.ia-b'),w:0,h:0,fl:{x:0,y:0,r:0},flA:null,on:false,pressT0:0,downPt:null,drainAt:0,drainPt:null,
 mx:spr(0,K.MAG_F,K.MAG_Z),my:spr(0,K.MAG_F,K.MAG_Z),sx:spr(1,K.SQ_F,K.SQ_Z),sy:spr(1,K.SQ_F,K.SQ_Z),roll:0,rollA0:0,rollB1:0,rollT0:0,rip:null,filt:f,fimg:im,disp:dm,filtOn:false};
 el.classList.add('inkb');btns.push(b);measure(b);kick();const P=e=>local(b,e.clientX,e.clientY);
+/* touch / pen: follow the finger after pointerdown. A pointercancel (the browser takes the touch to scroll) reports clientX/Y as 0,0,
+   so the drain uses the last real touch point, or the exact edge point where the finger left the button */
+let pid=-1,tp=null,finger=false,waitLift=false;const inBox=(r,x,y)=>x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+const exitDrain=(x,y)=>{const r=el.getBoundingClientRect(),q=tp;let ex=x,ey=y;if(q&&inBox(r,q.x,q.y)){let lo=0,hi=1;for(let i=0;i<14;i++){const t=(lo+hi)/2;if(inBox(r,q.x+(x-q.x)*t,q.y+(y-q.y)*t))lo=t;else hi=t}ex=q.x+(x-q.x)*hi;ey=q.y+(y-q.y)*hi}b.drainAt=0;b.drainPt=null;waitLift=false;drain(b,local(b,ex,ey))};
+const trackPt=(x,y)=>{if(pid<0)return;if(b.on&&!inBox(el.getBoundingClientRect(),x,y))exitDrain(x,y);tp={x,y}};
+addEventListener('pointermove',e=>{if(e.pointerId===pid&&e.pointerType!=='mouse')trackPt(e.clientX,e.clientY)},{passive:true});
+addEventListener('touchmove',e=>{if(finger&&e.touches.length)trackPt(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+const touchEnd=e=>{if(!finger||e.touches.length)return;finger=false;if(waitLift){waitLift=false;pid=-1;if(b.on&&tp)drain(b,local(b,tp.x,tp.y))}};
+addEventListener('touchend',touchEnd,{passive:true});addEventListener('touchcancel',touchEnd,{passive:true});
+
 el.addEventListener('pointerenter',e=>{armMaps();if(e.pointerType==='mouse'){flood(b,P(e));roll(b)}});
 el.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'){drain(b,P(e));release(b)}});
-el.addEventListener('pointerdown',e=>{if(e.button!==0)return;armMaps();const p=P(e);b.pressT0=now();b.downPt=p;if(e.pointerType!=='mouse')flood(b,p);press(b,p)});
-const up=e=>{if(!b.downPt)return;b.downPt=null;release(b);roll(b);if(e.pointerType!=='mouse'){const p=P(e),at=b.pressT0+K.TAP_HOLD;if(e.type==='pointercancel'||now()>=at)drain(b,p);else{b.drainAt=at;b.drainPt=p;kick()}}};
+el.addEventListener('pointerdown',e=>{if(e.button!==0)return;armMaps();const p=P(e);b.pressT0=now();b.downPt=p;if(e.pointerType!=='mouse'){pid=e.pointerId;tp={x:e.clientX,y:e.clientY};finger=e.pointerType==='touch';waitLift=false;flood(b,p)}press(b,p)});
+const up=e=>{if(!b.downPt)return;b.downPt=null;release(b);roll(b);if(e.pointerType!=='mouse'){const cancel=e.type==='pointercancel';if(cancel&&finger&&'ontouchstart' in window){waitLift=true;return}pid=-1;if(!b.on)return;const p=cancel?(tp?local(b,tp.x,tp.y):{x:b.w/2,y:b.h/2}):P(e),at=b.pressT0+K.TAP_HOLD;if(cancel||now()>=at)drain(b,p);else{b.drainAt=at;b.drainPt=p;kick()}}};
 addEventListener('pointerup',up);addEventListener('pointercancel',up);
 el.addEventListener('focus',()=>{armMaps();if(el.matches(':focus-visible')){measure(b);flood(b,{x:b.w/2,y:b.h/2})}});
 el.addEventListener('blur',()=>{if(b.on){measure(b);drain(b,{x:b.w/2,y:b.h/2})}});
